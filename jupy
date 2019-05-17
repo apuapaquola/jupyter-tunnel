@@ -39,13 +39,28 @@ def jupyter_command(directory, port):
 
 
 def run_remote_jupyter(host, directory, port):
-    subprocess.check_call(['ssh',
+    with subprocess.Popen(['ssh',
                            '-t',
                            '-L',
                            'localhost:%d:localhost:%d' % (port, port),
                            host,
-                           jupyter_command(directory, port)])
-                           
+                           jupyter_command(directory, port)],
+                          stdout=subprocess.PIPE) as p:
+        url_found = False
+        for line in p.stdout:
+            l = line.decode()
+            if not url_found:
+                m = re.search('(http://localhost:\S+)', l)
+                if m is not None:
+                    subprocess.Popen(["firefox",
+                                      "--private-window",
+                                      m.group(1)],
+                                     stdin=subprocess.DEVNULL,
+                                     stdout=subprocess.DEVNULL,
+                                     stderr=subprocess.DEVNULL)
+                    url_found = True
+            print(line.decode(), end='')
+
 
 def main():
     parser = argparse.ArgumentParser()
