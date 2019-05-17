@@ -1,0 +1,62 @@
+#!/usr/bin/env python
+"""Script to run jupyter notebook remotely. 
+It automatically finds an available port, sshs to the server, making ssh tunnel, calls jupyter notebook.
+
+Please copy to your ~/bin and edit to have your preferred host and port as defaults
+"""
+
+import sys
+import argparse
+import subprocess
+import re
+import os
+
+__author__ = 'Apuã Paquola'
+
+
+def used_ports_iter():
+    """ iteracts through output of ss -tnl command and gets local tcp ports that are being listened to """
+    with subprocess.Popen(['ss', '-tln'], stdout=subprocess.PIPE) as p:
+        for line in p.stdout:
+            l = line.decode().rstrip()
+            m = re.search("^LISTEN\s+\S+\s+\S+\s+\S+:(\d+)\s", l)
+            if m and m.group(1) is not None:
+                yield int(m.group(1))
+
+                
+def get_available_port():
+    """ gets first unused port """
+    used_ports = set(used_ports_iter())
+    i = 28888
+    while(i in used_ports):
+        i += 1
+    return i
+
+
+def jupyter_command(directory, port):
+    return """cd '%s'; jupyter notebook --no-browser --port=%d""" \
+        %(directory, port)
+
+
+def run_remote_jupyter(host, directory, port):
+    subprocess.check_call(['ssh',
+                           '-t',
+                           '-L',
+                           'localhost:%d:localhost:%d' % (port, port),
+                           host,
+                           jupyter_command(directory, port)])
+                           
+
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--host', default='node1')
+    parser.add_argument('--dir', default=os.getcwd())
+    parser.add_argument('--port', type=int, default=get_available_port())
+    args=parser.parse_args()
+
+    run_remote_jupyter(args.host, args.dir, args.port)
+
+                       
+if __name__ == '__main__':
+    main()
+
