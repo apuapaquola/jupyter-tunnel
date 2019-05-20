@@ -14,21 +14,23 @@ import os
 __author__ = 'Apuã Paquola'
 
 
-def used_ports_iter():
-    """ iteracts through output of ss -tnl command and gets local tcp ports that are being listened to """
-    with subprocess.Popen(['ss', '-tln'], stdout=subprocess.PIPE) as p:
-        for line in p.stdout:
-            l = line.decode().rstrip()
-            m = re.search("^LISTEN\s+\S+\s+\S+\s+\S+:(\d+)\s", l)
-            if m and m.group(1) is not None:
-                yield int(m.group(1))
+def used_ports_iter(host):
+    """ iterates through output of local and remote ss -tnl command and gets local tcp ports that are being listened to """
+
+    for command in [['ss', '-tln'], ['ssh', host, 'ss -tln']]:
+        with subprocess.Popen(command, stdout=subprocess.PIPE) as p:
+            for line in p.stdout:
+                l = line.decode().rstrip()
+                m = re.search("^LISTEN\s+\S+\s+\S+\s+\S+:(\d+)\s", l)
+                if m and m.group(1) is not None:
+                    yield int(m.group(1))
 
                 
-def get_available_port():
+def get_available_port(default_port, host):
     """ gets first unused port """
-    used_ports = set(used_ports_iter())
-    i = 28888
-    while(i in used_ports):
+    used_ports = set(used_ports_iter(host))
+    i = default_port
+    while i in used_ports:
         i += 1
     return i
 
@@ -66,10 +68,11 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--host', default='node1')
     parser.add_argument('--dir', default=os.getcwd())
-    parser.add_argument('--port', type=int, default=get_available_port())
+    parser.add_argument('--default-port', type=int, default=8888)
     args=parser.parse_args()
 
-    run_remote_jupyter(args.host, args.dir, args.port)
+    port = get_available_port(args.default_port, args.host)
+    run_remote_jupyter(args.host, args.dir, port)
 
                        
 if __name__ == '__main__':
