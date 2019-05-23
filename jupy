@@ -26,27 +26,27 @@ def used_ports_iter(host):
                     yield int(m.group(1))
 
                 
-def get_available_port(default_port, host):
+def get_available_port(default_tunnel_port, host):
     """ gets first unused port """
     used_ports = set(used_ports_iter(host))
-    i = default_port
+    i = default_tunnel_port
     while i in used_ports:
         i += 1
     return i
 
 
-def jupyter_command(directory, port):
+def jupyter_command(directory, tunnel_port):
     return """cd '%s'; jupyter notebook --no-browser --port=%d""" \
-        %(directory, port)
+        %(directory, tunnel_port)
 
 
-def run_remote_jupyter(host, directory, port):
+def run_remote_jupyter(host, directory, tunnel_port):
     with subprocess.Popen(['ssh',
                            '-t',
                            '-L',
-                           'localhost:%d:localhost:%d' % (port, port),
+                           'localhost:%d:localhost:%d' % (tunnel_port, tunnel_port),
                            host,
-                           jupyter_command(directory, port)],
+                           jupyter_command(directory, tunnel_port)],
                           stdout=subprocess.PIPE) as p:
         url_found = False
         for line in p.stdout:
@@ -68,11 +68,12 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--host', default='node1')
     parser.add_argument('--dir', default=os.getcwd())
-    parser.add_argument('--default-port', type=int, default=8888)
+    parser.add_argument('--default-tunnel-port', type=int, default=8888)
+#    parser.add_argument('--ssh-port', type=int, default=22)
     args=parser.parse_args()
 
-    port = get_available_port(args.default_port, args.host)
-    run_remote_jupyter(args.host, args.dir, port)
+    tunnel_port = get_available_port(args.default_tunnel_port, args.host)
+    run_remote_jupyter(args.host, args.dir, tunnel_port)
 
                        
 if __name__ == '__main__':
