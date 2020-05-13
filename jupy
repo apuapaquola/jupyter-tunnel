@@ -36,7 +36,7 @@ def get_available_port(default_tunnel_port, host, ssh_port):
 
 
 def jupyter_command(directory, tunnel_port):
-    return """cd '%s'; jupyter notebook --no-browser --port=%d""" \
+    return """cd '%s'; jupyter lab --no-browser --port=%d""" \
         %(directory, tunnel_port)
 
 
