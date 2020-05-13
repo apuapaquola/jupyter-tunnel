@@ -68,7 +68,7 @@ def run_remote_jupyter(host, ssh_port, directory, tunnel_port):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--host', default='node1')
+    parser.add_argument('--host', default='myhost')
     parser.add_argument('--dir', default=os.getcwd())
     parser.add_argument('--default-tunnel-port', type=int, default=8888)
     parser.add_argument('-p', '--ssh-port', type=int, default=22)
