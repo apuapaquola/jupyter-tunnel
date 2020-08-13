@@ -40,9 +40,17 @@ def jupyter_command(directory, tunnel_port):
         %(directory, tunnel_port)
 
 
-def run_remote_jupyter(host, ssh_port, directory, tunnel_port):
-    with subprocess.Popen(['ssh',
-                           '-p',
+def run_remote_jupyter(host, ssh_port, directory, user, tunnel_port):
+
+    if user is not None:
+        ssh_user_args = ['-l',
+                         user]
+    else:
+        ssh_user_args = []
+
+
+    with subprocess.Popen(['ssh'] + ssh_user_args +
+                          ['-p',
                            str(ssh_port),
                            '-t',
                            '-L',
@@ -70,14 +78,14 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--host', default='myhost')
     parser.add_argument('--dir', default=os.getcwd())
+    parser.add_argument('--user', default=None)
     parser.add_argument('--default-tunnel-port', type=int, default=8888)
     parser.add_argument('-p', '--ssh-port', type=int, default=22)
     args=parser.parse_args()
 
     tunnel_port = get_available_port(args.default_tunnel_port, args.host, args.ssh_port)
-    run_remote_jupyter(args.host, args.ssh_port, args.dir, tunnel_port)
+    run_remote_jupyter(args.host, args.ssh_port, args.dir, args.user, tunnel_port)
 
                        
 if __name__ == '__main__':
     main()
-

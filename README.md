@@ -7,14 +7,16 @@ When called, jupyter-tunnel:
 + calls firefox on the local host passing a URL to connect to jupyter server
 
 <pre>
-jupyter-tunnel.py [-h] [--host HOST] [--dir DIR]
-                  [--default-tunnel-port DEFAULT_TUNNEL_PORT]
-                  [-p SSH_PORT]
+jupyter-tunnel.py [-h] [--host HOST] [--dir DIR] [--user USER]
+                         [--default-tunnel-port DEFAULT_TUNNEL_PORT]
+                         [-p SSH_PORT]
 
 optional arguments:
   -h, --help            show this help message and exit
   --host HOST
   --dir DIR
+  --user USER
   --default-tunnel-port DEFAULT_TUNNEL_PORT
   -p SSH_PORT, --ssh-port SSH_PORT
+
 </pre>
