@@ -14,10 +14,23 @@ import os
 __author__ = 'Apuã Paquola'
 
 
-def used_ports_iter(host, ssh_port):
+def get_ssh_user_args(user):
+    if user is not None:
+        ssh_user_args = ['-l',
+                         user]
+    else:
+        ssh_user_args = []
+
+    return ssh_user_args
+
+
+def used_ports_iter(host, ssh_port, user):
     """ iterates through output of local and remote ss -tnl command and gets local tcp ports that are being listened to """
 
-    for command in [['ss', '-tln'], ['ssh', '-p', str(ssh_port), host, 'ss -tln']]:
+    local_command = ['ss', '-tln']
+    remote_command = ['ssh'] + get_ssh_user_args(user) + ['-p', str(ssh_port), host, 'ss -tln']
+
+    for command in [local_command, remote_command]:
         with subprocess.Popen(command, stdout=subprocess.PIPE) as p:
             for line in p.stdout:
                 l = line.decode().rstrip()
@@ -26,9 +39,9 @@ def used_ports_iter(host, ssh_port):
                     yield int(m.group(1))
 
                 
-def get_available_port(default_tunnel_port, host, ssh_port):
+def get_available_port(default_tunnel_port, host, ssh_port, user):
     """ gets first unused port """
-    used_ports = set(used_ports_iter(host, ssh_port))
+    used_ports = set(used_ports_iter(host, ssh_port, user))
     i = default_tunnel_port
     while i in used_ports:
         i += 1
@@ -40,16 +53,11 @@ def jupyter_command(directory, tunnel_port):
         %(directory, tunnel_port)
 
 
+
+
 def run_remote_jupyter(host, ssh_port, directory, user, tunnel_port):
 
-    if user is not None:
-        ssh_user_args = ['-l',
-                         user]
-    else:
-        ssh_user_args = []
-
-
-    with subprocess.Popen(['ssh'] + ssh_user_args +
+    with subprocess.Popen(['ssh'] + get_ssh_user_args(user) +
                           ['-p',
                            str(ssh_port),
                            '-t',
@@ -83,7 +91,7 @@ def main():
     parser.add_argument('-p', '--ssh-port', type=int, default=22)
     args=parser.parse_args()
 
-    tunnel_port = get_available_port(args.default_tunnel_port, args.host, args.ssh_port)
+    tunnel_port = get_available_port(args.default_tunnel_port, args.host, args.ssh_port, args.user)
     run_remote_jupyter(args.host, args.ssh_port, args.dir, args.user, tunnel_port)
 
                        
